@@ -182,7 +182,7 @@ class Yammer(object):
             body = urllib.urlencode(cleaned_params)
             if method == 'GET':
                 url = '%s?%s' % (url, body)
-                body = None
+                body = ''
 
         resp, content = self.client.request(url, method=method, body=body)
         try:
