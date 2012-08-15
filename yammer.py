@@ -22,105 +22,171 @@ class Endpoint(object):
 
 
 class MessageEndpoint(Endpoint):
+    def all(self, **kwargs):
+        """Returns all messages
 
-    def _get_msgs(self, endpoint, raw, older_than, newer_than, threaded):
-        msgs = self._get(endpoint, older_than=older_than,
-                         newer_than=newer_than, threaded=threaded)
-        if raw:
-            return msgs
+        Keyword arguments:
+        older_than -- returned messages must be older than the supplied id
+        newer_than -- returned messages must be newer than the supplied id
+        threaded -- possible values:
+                        true (only show first message of thread)
+                        extended (show first/two most recent messages of thread)
+        limit -- return only the specified number of messages
+        """
+        return self._get_msgs('messages.json', **kwargs)
+
+    def sent(self, **kwargs):
+        """Returns sent messages; see all() for keywords"""
+        return self._get_msgs('messages/sent.json', **kwargs)
+
+    def received(self, **kwargs):
+        """Returns received messages; see all() for keywords"""
+        return self._get_msgs('messages/received.json', **kwargs)
+
+    def private(self, **kwargs):
+        """Returns private messages to the user; see all() for keywords"""
+        return self._get_messages('messages/private.json', **kwargs)
+
+    def following(self, **kwargs):
+        """Returns followed messages; see all() for keywords"""
+        return self._get_msgs('messages/following.json', **kwargs)
+
+    def from_user(self, id, **kwargs):
+        """Returns messages from the given user; see all() for keywords"""
+        return self._get_msgs('messages/from_user/%d.json' % id, **kwargs)
+
+    def from_bot(self, id, **kwargs):
+        """Deprecated; no longer implemented"""
+        raise NotImplementedError
+
+    def about_topic(self, id, **kwargs):
+        """Returns messages within the given topic; see all() for keywords"""
+        return self._get_msgs(
+            'messages/about_topic/%d.json' % id, **kwargs)
+
+    def tagged_width(self, id, **kwargs):
+        """Alias to about_topic()"""
+        return self.about_topic(id)
+
+    def in_group(self, id, **kwargs):
+        """Returns messages within the given group; see all() for keywords"""
+        return self._get_msgs('messages/in_group/%d.json' % id, **kwargs)
+
+    def liked_by(self, id, **kwargs):
+        """Returns liked messages; see all() for keywords"""
+        return self._get_msgs('messages/liked_by/%d.json' % id, **kwargs)
+
+    def favorites_of(self, id, **kwargs):
+        """Alias to liked_by()"""
+        return self.liked_by(id, **kwargs)
+
+    def in_thread(self, id, **kwargs):
+        """Returns messages within the thread; see all() for keywords"""
+        return self._get_msgs('messages/in_thread/%d.json' % id, **kwargs)
+
+    def post(self, body, **kwargs):
+        """Create a message with the given body
+
+        Keyword arguments:
+        group_id -- The group id to post the message to
+        replied_to_id -- The message id to reply to
+        direct_to_id -- The user id to send a private message to
+        broadcast -- If message should be broadcast (admin only)
+        topics -- A list of topics (max 20)
+        pending_attachments -- A list of pending attachment ids (max 20)
+        og_<property> -- Open graph properties
+        """
+        if not kwargs.get('group_id') and not kwargs.get('direct_to_id') \
+                and not kwargs.get('replied_to_id'):
+            raise ValueError(
+                'group_id, replied_to_id, or direct_to_id must be supplied')
+        self._convert_list_to_keys(kwargs, 'topics', 'topic', size=20)
+        self._convert_list_to_keys(
+            kwargs, 'pending_attachments', 'pending_attachment', size=20)
+
+        return self._post('messages.json', **kwargs)
+
+    def delete(self, id):
+        """Delete the message with the given id"""
+        return self._delete('messages/%d' % id)
+
+    def _get_msgs(self, endpoint, **kwargs):
+        rv = self._get(endpoint,
+                       older_than=kwargs.get('older_than'),
+                       newer_than=kwargs.get('newer_than'),
+                       threaded=kwargs.get('threaded'),
+                       limit=kwargs.get('limit'))
+        if kwargs.get('raw', False):
+            return rv
         else:
-            if 'messages' not in msgs:
-                print msgs
-            return msgs['messages']
+            if 'messages' not in rv:
+                print rv
+            return rv['messages']
 
-    def all(self, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages', raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
+    def _convert_list_to_keys(self, args, list_key, item_key, size=None):
+        if not list_key in args:
+            return
 
-    def sent(self, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/sent', raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
+        if not args.get(list_key):
+            args[list_key] = []
+        elif not isinstance(args.get(list_key), list):
+            args[list_key] = [args.get(list_key)]
 
-    def received(self, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/received', raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
+        if size is not None and len(args.get(list_key)) > size:
+            raise ValueError('%s length must not exceed %d' % (list_key, size))
+        for x in range(len(args.get(list_key))):
+            args['%s%d' % (item_key, x)] = args.get(list_key)[x]
 
-    def following(self, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/following', raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def from_user(self, id, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/from_user/%s' % id, raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def from_bot(self, id, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/from_bot/%s' % id, raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def tagged_with(self, id, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/tagged_with/%s' % id, raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def in_group(self, id, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/in_group/%s' % id, raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def favorites_of(self, id, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/favorites_of/%s' % id, raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def in_thread(self, id, raw=False, older_than=None, newer_than=None, threaded=None):
-        return self._get_msgs('messages/in_thread/%s' % id, raw=raw,
-                              older_than=older_than, newer_than=newer_than,
-                              threaded=threaded)
-
-    def post(self, body, group_id=None, replied_to_id=None, direct_to_id=None):
-        # doesn't support attachments
-        return self._post('messages/', group_id=group_id,
-                          replied_to_id=replied_to_id, body=body,
-                          direct_to_id=direct_to_id)
-
-    def delete(self, message_id):
-        return self._delete('messages/%s' % message_id)
 
 class GroupEndpoint(Endpoint):
+    def all(self, **kwargs):
+        """Lists all groups
 
-    def all(self, page=1, letter=None, sort_by=None, reverse=None):
-        return self._get('groups', page=page, letter=letter, sort_by=sort_by,
-                         reverse=reverse)
+        Keyword arguments:
+        page -- return groups on the page, 1-based
+        letter -- return only groups starting with the letter
+        sort_by -- possible values: messages, members, privacy, created_at,
+                   creator
+        reverse -- reverse the sort order
+        """
+        return self._get('groups.json', **kwargs)
 
     def get(self, id):
-        return self._get('groups/%s' % id)
+        """Get the group with the supplied id"""
+        return self._get('groups/%d.json' % id)
 
     def create(self, name, private=None):
+        """Create a new group with the supplied name"""
         return self._post('groups', name=name, private=private)
 
-    def update(self, id, name, private):
-        return self._post('groups/%s' % id, name=name, private=private)
+    def update(self, id, name, private=None):
+        """Update an existing group"""
+        return self._post('groups/%d' % id, name=name, private=private)
+
 
 class UserEndpoint(Endpoint):
+    def all(self, **kwargs):
+        """Lists all users
 
-    def all(self, page=1, letter=None, sort_by=None, reverse=None):
-        return self._get('users', page=page, letter=letter, sort_by=sort_by,
-                         reverse=reverse)
+        Keyword arguments:
+        page -- return users on the page, 1-based
+        letter -- returning users beginning wit the given letter
+        sort_by -- possible values: messages, followers
+        reverse -- reverse the sort order
+        """
+        return self._get('users.json', **kwargs)
 
     def get(self, id):
-        return self._get('users/%s' % id)
+        """Get the user with the supplied id"""
+        return self._get('users/%d.json' % id)
 
     def current(self):
-        return self._get('users/current')
+        """Get the currently logged in user"""
+        return self._get('users/current.json')
 
     def by_email(self, email):
-        return self._get('users/by_email', email=email)
+        """Get the user matching the supplied email address"""
+        return self._get('users/by_email.json', email=email)
 
 
 class Yammer(object):
@@ -192,5 +258,3 @@ class Yammer(object):
             return json_obj
         except ValueError:
             print resp, content
-
-
