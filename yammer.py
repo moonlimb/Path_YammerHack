@@ -7,7 +7,81 @@ import urllib
 import urlparse
 import oauth2 as oauth
 
-class Endpoint(object):
+class Yammer(object):
+    request_token_url = 'https://www.yammer.com/oauth/request_token'
+    access_token_url = 'https://www.yammer.com/oauth/access_token'
+    authorize_url = 'https://www.yammer.com/oauth/authorize'
+    base_url = 'https://www.yammer.com/api/v1/'
+
+    def __init__(self, consumer_key, consumer_secret,
+                 oauth_token=None, oauth_token_secret=None):
+        self.consumer = oauth.Consumer(consumer_key, consumer_secret)
+        if oauth_token and oauth_token_secret:
+            self.token = oauth.Token(oauth_token, oauth_token_secret)
+        else:
+            self.token = None
+        self.client = oauth.Client(self.consumer, self.token)
+
+        # connect endpoints
+        self.messages = _MessageEndpoint(self)
+        self.groups = _GroupEndpoint(self)
+        self.users = _UserEndpoint(self)
+
+    # authorization
+    @property
+    def request_token(self):
+        if not hasattr(self, '_request_token'):
+            resp, content = self.client.request(self.request_token_url, "GET")
+            if resp['status'] != '200':
+                raise Exception("Invalid response %s." % resp['status'])
+
+            self._request_token = dict(urlparse.parse_qsl(content))
+        return self._request_token
+
+    def get_authorize_url(self):
+        return "%s?oauth_token=%s" \
+            % (self.authorize_url, self.request_token['oauth_token'])
+
+    def get_access_token(self, oauth_verifier):
+        # set verifier
+        token = oauth.Token(self.request_token['oauth_token'],
+                            self.request_token['oauth_token_secret'])
+        token.set_verifier(oauth_verifier)
+        self.client = oauth.Client(self.consumer, token)
+
+        # parse response
+        resp, content = self.client.request(self.access_token_url, "POST")
+        access_token = dict(urlparse.parse_qsl(content))
+        return access_token
+
+    # requests
+    def _apicall(self, endpoint, method, **params):
+        if method == 'GET':
+            suffix = '.json'
+        else:
+            suffix = ''
+        url = '%s%s%s' % (self.base_url, endpoint, suffix)
+        body = None
+        cleaned_params = dict([(k,v) for k,v in params.iteritems() if v])
+
+        if cleaned_params:
+            body = urllib.urlencode(cleaned_params)
+            if method == 'GET':
+                url = '%s?%s' % (url, body)
+                body = ''
+
+        resp, content = self.client.request(url, method=method, body=body)
+        try:
+            json_obj = json.loads(content)
+            if 'response' in json_obj \
+                    and json_obj['response'].get('stat', None) == 'fail':
+                raise Exception(json_obj['response']['message'])
+            return json_obj
+        except ValueError:
+            print resp, content
+
+
+class _Endpoint(object):
     def __init__(self, yammer):
         self.yammer = yammer
 
@@ -21,7 +95,7 @@ class Endpoint(object):
         return self.yammer._apicall(endpoint, 'DELETE', **params)
 
 
-class MessageEndpoint(Endpoint):
+class _MessageEndpoint(_Endpoint):
     def all(self, **kwargs):
         """Returns all messages
 
@@ -138,7 +212,7 @@ class MessageEndpoint(Endpoint):
             args['%s%d' % (item_key, x)] = args.get(list_key)[x]
 
 
-class GroupEndpoint(Endpoint):
+class _GroupEndpoint(_Endpoint):
     def all(self, **kwargs):
         """Lists all groups
 
@@ -164,7 +238,7 @@ class GroupEndpoint(Endpoint):
         return self._post('groups/%d' % id, name=name, private=private)
 
 
-class UserEndpoint(Endpoint):
+class _UserEndpoint(Endpoint):
     def all(self, **kwargs):
         """Lists all users
 
@@ -187,74 +261,3 @@ class UserEndpoint(Endpoint):
     def by_email(self, email):
         """Get the user matching the supplied email address"""
         return self._get('users/by_email.json', email=email)
-
-
-class Yammer(object):
-    request_token_url = 'https://www.yammer.com/oauth/request_token'
-    access_token_url = 'https://www.yammer.com/oauth/access_token'
-    authorize_url = 'https://www.yammer.com/oauth/authorize'
-    base_url = 'https://www.yammer.com/api/v1/'
-
-    def __init__(self, consumer_key, consumer_secret, oauth_token=None, oauth_token_secret=None):
-        self.consumer = oauth.Consumer(consumer_key, consumer_secret)
-        if oauth_token and oauth_token_secret:
-            self.token = oauth.Token(oauth_token, oauth_token_secret)
-        else:
-            self.token = None
-        self.client = oauth.Client(self.consumer, self.token)
-
-        # connect endpoints
-        self.messages = MessageEndpoint(self)
-        self.groups = GroupEndpoint(self)
-        self.users = UserEndpoint(self)
-
-    # authorization
-    @property
-    def request_token(self):
-        if not hasattr(self, '_request_token'):
-            resp, content = self.client.request(self.request_token_url, "GET")
-            if resp['status'] != '200':
-                raise Exception("Invalid response %s." % resp['status'])
-
-            self._request_token = dict(urlparse.parse_qsl(content))
-        return self._request_token
-
-    def get_authorize_url(self):
-        return "%s?oauth_token=%s" % (self.authorize_url, self.request_token['oauth_token'])
-
-    def get_access_token(self, oauth_verifier):
-        # set verifier
-        token = oauth.Token(self.request_token['oauth_token'],
-                            self.request_token['oauth_token_secret'])
-        token.set_verifier(oauth_verifier)
-        self.client = oauth.Client(self.consumer, token)
-
-        # parse response
-        resp, content = self.client.request(self.access_token_url, "POST")
-        access_token = dict(urlparse.parse_qsl(content))
-        return access_token
-
-    # requests
-    def _apicall(self, endpoint, method, **params):
-        if method == 'GET':
-            suffix = '.json'
-        else:
-            suffix = ''
-        url = '%s%s%s' % (self.base_url, endpoint, suffix)
-        body = None
-        cleaned_params = dict([(k,v) for k,v in params.iteritems() if v])
-
-        if cleaned_params:
-            body = urllib.urlencode(cleaned_params)
-            if method == 'GET':
-                url = '%s?%s' % (url, body)
-                body = ''
-
-        resp, content = self.client.request(url, method=method, body=body)
-        try:
-            json_obj = json.loads(content)
-            if 'response' in json_obj and json_obj['response'].get('stat', None) == 'fail':
-                raise Exception(json_obj['response']['message'])
-            return json_obj
-        except ValueError:
-            print resp, content
