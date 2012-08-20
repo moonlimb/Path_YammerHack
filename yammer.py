@@ -238,7 +238,7 @@ class _GroupEndpoint(_Endpoint):
         return self._post('groups/%d' % id, name=name, private=private)
 
 
-class _UserEndpoint(Endpoint):
+class _UserEndpoint(_Endpoint):
     def all(self, **kwargs):
         """Lists all users
 
