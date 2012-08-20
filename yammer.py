@@ -61,7 +61,7 @@ class Yammer(object):
         else:
             suffix = ''
         url = '%s%s%s' % (self.base_url, endpoint, suffix)
-        body = None
+        body = ''
         cleaned_params = dict([(k,v) for k,v in params.iteritems() if v])
 
         if cleaned_params:
