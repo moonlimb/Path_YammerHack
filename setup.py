@@ -3,7 +3,7 @@ from distutils.core import setup
 long_description = open('README.rst').read()
 
 setup(name="python-yammer",
-      version='0.2.0',
+      version='0.2.1',
       py_modules=["yammer"],
       description="Library for interacting with the Yammer API",
       author="James Turk, Adam Gschwender",
