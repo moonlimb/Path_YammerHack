@@ -21,4 +21,5 @@ setup(name="python-yammer",
                    "Programming Language :: Python",
                    "Topic :: Software Development :: Libraries :: Python Modules",
                    ],
+      zip_safe=False,
       )
