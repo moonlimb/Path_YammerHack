@@ -56,11 +56,7 @@ class Yammer(object):
 
     # requests
     def _apicall(self, endpoint, method, **params):
-        if method == 'GET':
-            suffix = '.json'
-        else:
-            suffix = ''
-        url = '%s%s%s' % (self.base_url, endpoint, suffix)
+        url = '%s%s' % (self.base_url, endpoint)
         body = ''
         cleaned_params = dict([(k,v) for k,v in params.iteritems() if v])
 
@@ -71,14 +67,19 @@ class Yammer(object):
                 body = ''
 
         resp, content = self.client.request(url, method=method, body=body)
+        if resp.status == 401:
+            raise UnauthorizedError()
+        elif resp.status != 200:
+            raise UnknownError('invalid http response: %d' % resp.status)
+
         try:
             json_obj = json.loads(content)
             if 'response' in json_obj \
                     and json_obj['response'].get('stat', None) == 'fail':
-                raise Exception(json_obj['response']['message'])
+                raise YammerError(json_obj['response']['message'])
             return json_obj
         except ValueError:
-            print resp, content
+            raise UnknownError('invalid response')
 
 
 class _Endpoint(object):
@@ -190,12 +191,7 @@ class _MessageEndpoint(_Endpoint):
                        newer_than=kwargs.get('newer_than'),
                        threaded=kwargs.get('threaded'),
                        limit=kwargs.get('limit'))
-        if kwargs.get('raw', False):
-            return rv
-        else:
-            if 'messages' not in rv:
-                print rv
-            return rv['messages']
+        return rv
 
     def _convert_list_to_keys(self, args, list_key, item_key, size=None):
         if not list_key in args:
@@ -261,3 +257,15 @@ class _UserEndpoint(_Endpoint):
     def by_email(self, email):
         """Get the user matching the supplied email address"""
         return self._get('users/by_email.json', email=email)
+
+class UnauthorizedError(Exception):
+    """Request to Yammer has not been authorized."""
+    pass
+
+class YammerError(Exception):
+    """Yammer responded with a failure message."""
+    pass
+
+class UnknownError(Exception):
+    """Unexpected error from Yammer."""
+    pass
