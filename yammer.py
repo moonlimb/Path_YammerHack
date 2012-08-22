@@ -41,10 +41,9 @@ class Yammer(object):
             if resp['status'] != '200':
                 raise Exception("Invalid response %s." % resp['status'])
 
-            data = dict(urlparse.parse_qsl(content))
+            d = dict(urlparse.parse_qsl(content))
             self._request_token = oauth.Token(
-                self.request_token['oauth_token'],
-                self.request_token['oauth_token_secret'])
+                d['oauth_token'], d['oauth_token_secret'])
         return self._request_token
 
     def get_authorize_url(self):
