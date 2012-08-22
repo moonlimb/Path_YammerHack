@@ -50,6 +50,7 @@ class Yammer(object):
 
     def get_access_token(self, oauth_verifier):
         # set verifier
+        print oauth_verifier
         if not self.token:
             token = oauth.Token(self.request_token['oauth_token'],
                                 self.request_token['oauth_token_secret'])
@@ -58,6 +59,7 @@ class Yammer(object):
         token.set_verifier(oauth_verifier)
         self.client = oauth.Client(self.consumer, token)
 
+        print str(token)
         # parse response
         resp, content = self.client.request(self.access_token_url, "POST")
         access_token = dict(urlparse.parse_qsl(content))
