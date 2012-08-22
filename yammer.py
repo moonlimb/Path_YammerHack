@@ -37,13 +37,7 @@ class Yammer(object):
     @property
     def request_token(self):
         if not hasattr(self, '_request_token'):
-            resp, content = self.client.request(self.request_token_url, "GET")
-            if resp['status'] != '200':
-                raise Exception("Invalid response %s." % resp['status'])
-
-            d = dict(urlparse.parse_qsl(content))
-            self._request_token = oauth.Token(
-                d['oauth_token'], d['oauth_token_secret'])
+            self._request_token = self._get_token(self.request_token_url)
         return self._request_token
 
     def get_authorize_url(self):
@@ -52,19 +46,17 @@ class Yammer(object):
 
     def get_access_token(self, oauth_verifier):
         # set verifier
-        print oauth_verifier
         if not self.token:
             token = self.request_token
         else:
             token = self.token
         token.set_verifier(oauth_verifier)
         self.client = oauth.Client(self.consumer, token)
+        return self._get_token(self.access_token_url, "POST")
 
-        print str(token)
-        # parse response
-        resp, content = self.client.request(self.access_token_url, "POST")
-        access_token = dict(urlparse.parse_qsl(content))
-        return access_token
+    def verify(self, oauth_verifier):
+        self.token = self.get_access_token(oauth_verifier)
+        self.client = oauth.Client(self.consumer, self.token)
 
     # requests
     def _apicall(self, endpoint, method, **params):
@@ -93,6 +85,12 @@ class Yammer(object):
         except ValueError:
             raise UnknownError('invalid response')
 
+    def _get_token(self, url, method="GET"):
+        resp, content = self.client.request(url, method)
+        if resp['status'] != '200':
+            raise Exception("Invalid response %s." % resp['status'])
+        d = dict(urlparse.parse_qsl(content))
+        return oauth.Token(d['oauth_token'], d['oauth_token_secret'])
 
 class _Endpoint(object):
     def __init__(self, yammer):
