@@ -57,6 +57,7 @@ class Yammer(object):
     def verify(self, oauth_verifier):
         self.token = self.get_access_token(oauth_verifier)
         self.client = oauth.Client(self.consumer, self.token)
+        return self.token
 
     # requests
     def _apicall(self, endpoint, method, **params):
