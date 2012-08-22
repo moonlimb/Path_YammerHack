@@ -8,13 +8,19 @@ import urlparse
 import oauth2 as oauth
 
 class Yammer(object):
-    request_token_url = 'https://www.yammer.com/oauth/request_token'
-    access_token_url = 'https://www.yammer.com/oauth/access_token'
-    authorize_url = 'https://www.yammer.com/oauth/authorize'
     base_url = 'https://www.yammer.com/api/v1/'
 
     def __init__(self, consumer_key, consumer_secret,
-                 oauth_token=None, oauth_token_secret=None):
+                 oauth_token=None, oauth_token_secret=None,
+                 request_token_url=None, access_token_url=None,
+                 authorize_url=None):
+        self.request_token_url = 'https://www.yammer.com/oauth/request_token' \
+            if request_token_url is None else request_token_url
+        self.access_token_url = 'https://www.yammer.com/oauth/access_token' \
+            if access_token_url is None else access_token_url
+        self.authorize_url = 'https://www.yammer.com/oauth/authorize' \
+            if authorize_url is None else authorize_url
+
         self.consumer = oauth.Consumer(consumer_key, consumer_secret)
         if oauth_token and oauth_token_secret:
             self.token = oauth.Token(oauth_token, oauth_token_secret)
