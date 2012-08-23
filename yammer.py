@@ -150,8 +150,16 @@ class _YammerOAuth2Client(object):
 
         if 'token' not in d:
             raise YammerError('invalid access token response')
-        return d['token']
+        self.access_token = d['token']
+        return self.access_token
 
+    def request(self, *args, **kwargs):
+        if 'headers' not in kwargs:
+            kwargs['headers'] = \
+                dict(('Authorization', 'Bearer %s' % self.access_token))
+        else:
+            kwargs['headers']['Authorization'] = 'Bearer %s' % self.access_token
+        return self.client.request(*args, **kwargs)
 
     def __getattr__(self, name):
         return getattr(self.client, name)
