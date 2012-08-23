@@ -135,7 +135,7 @@ class _YammerOAuth2Client(object):
                   code=code)
         qs = {x : y for x, y in qs.items() if y is not None}
         url = "%s?%s" % (self.access_token_url, urllib.urlencode(qs))
-        resp, content = self.client.request(url, method)
+        resp, content = self.client.request(url, 'GET')
         if resp['status'] != '200':
             raise Exception("Invalid response %s." % resp['status'])
 
