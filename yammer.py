@@ -125,15 +125,16 @@ class _YammerOAuth2Client(object):
         self.client = httplib2.Http()
 
     def get_authorize_url(self):
-        qs = urllib.urlencode(dict(client_id=self.consumer_key,
-                                   redirect_uri=self.redirect_url))
-        return "%s?%s" % (self.authorize_url, qs)
+        qs = dict(client_id=self.consumer_key, redirect_uri=self.redirect_url)
+        qs = {x : y for x, y in qs.items() if y is not None}
+        return "%s?%s" % (self.authorize_url, urllib.urlencode(qs))
 
     def authenticate(self, code):
         qs = dict(client_id=self.consumer_key,
                   client_secret=self.consumer_secret,
                   code=code)
-        url = "%s?%s" % (self.access_token_url, qs)
+        qs = {x : y for x, y in qs.items() if y is not None}
+        url = "%s?%s" % (self.access_token_url, urllib.urlencode(qs))
         resp, content = self.client.request(url, method)
         if resp['status'] != '200':
             raise Exception("Invalid response %s." % resp['status'])
