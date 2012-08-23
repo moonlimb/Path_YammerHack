@@ -1,4 +1,4 @@
-import httplib
+import httplib2
 try:
     import json
 except ImportError:
@@ -120,6 +120,7 @@ class _YammerOAuth2Client(object):
         self.access_token_url = \
             'https://www.yammer.com/oauth2/access_token.json' \
             if access_token_url is None else access_token_url
+        self.client = httplib2.Http()
 
     def get_authorize_url(self):
         qs = urllib.urlencode(dict(client_id=self.consumer_key,
