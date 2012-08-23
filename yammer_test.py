@@ -28,6 +28,10 @@ class TestYammer(unittest.TestCase):
         client = yammer.Yammer(CONSUMER_KEY, CONSUMER_SECRET, oauth2=True)
         client.get_authorize_url()
 
+    def test_authenticate(self):
+        client = yammer.Yammer(CONSUMER_KEY, CONSUMER_SECRET, oauth2=True)
+        self.assertRaises(Exception, client.authenticate, ["0000000000000000"])
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the yammer client tests')

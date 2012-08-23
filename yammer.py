@@ -144,7 +144,7 @@ class _YammerOAuth2Client(object):
             json_obj = json.loads(content)
             if 'error' in json_obj:
                 raise YammerError(json_obj['error']['message'])
-            d = json_obj.get('user', dict()).get('access_token', dict())
+            d = json_obj.get('access_token', dict())
         except ValueError:
             raise UnknownError('invalid response')
 
