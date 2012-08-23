@@ -156,7 +156,7 @@ class _YammerOAuth2Client(object):
     def request(self, *args, **kwargs):
         if 'headers' not in kwargs:
             kwargs['headers'] = \
-                dict(('Authorization', 'Bearer %s' % self.access_token))
+                dict({'Authorization': 'Bearer %s' % self.access_token})
         else:
             kwargs['headers']['Authorization'] = 'Bearer %s' % self.access_token
         return self.client.request(*args, **kwargs)
