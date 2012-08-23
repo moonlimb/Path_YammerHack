@@ -113,6 +113,8 @@ class _YammerOAuth2Client(object):
     def __init__(self, consumer_key, consumer_secret,
                  access_token=None, redirect_url=None,
                  access_token_url=None, authorize_url=None):
+        self.consumer_key = consumer_key
+        self.consumer_secret = consumer_secret
         self.access_token = access_token
         self.redirect_url = redirect_url
         self.authorize_url = 'https://www.yammer.com/dialog/oauth' \

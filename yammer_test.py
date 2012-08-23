@@ -17,9 +17,16 @@ class TestYammer(unittest.TestCase):
     def test_init(self):
         client = yammer.Yammer(CONSUMER_KEY, CONSUMER_SECRET)
 
-    def test_messages(self):
+    def test_unauthorized(self):
         client = yammer.Yammer(CONSUMER_KEY, CONSUMER_SECRET)
         self.assertRaises(yammer.UnauthorizedError, client.messages.all)
+
+    def test_get_authorize_url(self):
+        client = yammer.Yammer(CONSUMER_KEY, CONSUMER_SECRET)
+        client.get_authorize_url()
+
+        client = yammer.Yammer(CONSUMER_KEY, CONSUMER_SECRET, oauth2=True)
+        client.get_authorize_url()
 
 
 if __name__ == '__main__':
