@@ -1,3 +1,4 @@
+import httplib
 try:
     import json
 except ImportError:
@@ -10,56 +11,19 @@ import oauth2 as oauth
 class Yammer(object):
     base_url = 'https://www.yammer.com/api/v1/'
 
-    def __init__(self, consumer_key, consumer_secret,
-                 oauth_token=None, oauth_token_secret=None,
-                 request_token_url=None, access_token_url=None,
-                 authorize_url=None):
-        self.request_token_url = 'https://www.yammer.com/oauth/request_token' \
-            if request_token_url is None else request_token_url
-        self.access_token_url = 'https://www.yammer.com/oauth/access_token' \
-            if access_token_url is None else access_token_url
-        self.authorize_url = 'https://www.yammer.com/oauth/authorize' \
-            if authorize_url is None else authorize_url
-
-        self.consumer = oauth.Consumer(consumer_key, consumer_secret)
-        if oauth_token and oauth_token_secret:
-            self.token = oauth.Token(oauth_token, oauth_token_secret)
+    def __init__(self, *args, **kwargs):
+        use_oauth2 = False
+        if 'oauth2' in kwargs:
+            use_oauth2 = bool(kwargs['oauth2'])
+            del kwargs['oauth2']
+        if use_oauth2:
+            self.client = _YammerOAuth2Client(*args, **kwargs)
         else:
-            self.token = None
-        self.client = oauth.Client(self.consumer, self.token)
-
-        # connect endpoints
+            self.client = _YammerOAuthClient(*args, **kwargs)
         self.messages = _MessageEndpoint(self)
         self.groups = _GroupEndpoint(self)
         self.users = _UserEndpoint(self)
 
-    # authorization
-    @property
-    def request_token(self):
-        if not hasattr(self, '_request_token'):
-            self._request_token = self._get_token(self.request_token_url)
-        return self._request_token
-
-    def get_authorize_url(self):
-        return "%s?oauth_token=%s" \
-            % (self.authorize_url, self.request_token.key)
-
-    def get_access_token(self, oauth_verifier):
-        # set verifier
-        if not self.token:
-            token = self.request_token
-        else:
-            token = self.token
-        token.set_verifier(oauth_verifier)
-        self.client = oauth.Client(self.consumer, token)
-        return self._get_token(self.access_token_url, "POST")
-
-    def verify(self, oauth_verifier):
-        self.token = self.get_access_token(oauth_verifier)
-        self.client = oauth.Client(self.consumer, self.token)
-        return self.token
-
-    # requests
     def _apicall(self, endpoint, method, **params):
         url = '%s%s' % (self.base_url, endpoint)
         body = ''
@@ -86,12 +50,108 @@ class Yammer(object):
         except ValueError:
             raise UnknownError('invalid response')
 
+    def __getattr__(self, name):
+        return getattr(self.client, name)
+
+
+class _YammerOAuthClient(object):
+    def __init__(self, consumer_key, consumer_secret,
+                 oauth_token=None, oauth_token_secret=None,
+                 request_token_url=None, access_token_url=None,
+                 authorize_url=None):
+        self.request_token_url = 'https://www.yammer.com/oauth/request_token' \
+            if request_token_url is None else request_token_url
+        self.access_token_url = 'https://www.yammer.com/oauth/access_token' \
+            if access_token_url is None else access_token_url
+        self.authorize_url = 'https://www.yammer.com/oauth/authorize' \
+            if authorize_url is None else authorize_url
+
+        self.consumer = oauth.Consumer(consumer_key, consumer_secret)
+        if oauth_token and oauth_token_secret:
+            self.token = oauth.Token(oauth_token, oauth_token_secret)
+        else:
+            self.token = None
+        self.client = oauth.Client(self.consumer, self.token)
+
+    @property
+    def request_token(self):
+        if not hasattr(self, '_request_token'):
+            self._request_token = self._get_token(self.request_token_url)
+        return self._request_token
+
+    def get_authorize_url(self):
+        return "%s?oauth_token=%s" \
+            % (self.authorize_url, self.request_token.key)
+
+    def get_access_token(self, oauth_verifier):
+        # set verifier
+        if not self.token:
+            token = self.request_token
+        else:
+            token = self.token
+        token.set_verifier(oauth_verifier)
+        self.client = oauth.Client(self.consumer, token)
+        return self._get_token(self.access_token_url, "POST")
+
+    def verify(self, oauth_verifier):
+        self.token = self.get_access_token(oauth_verifier)
+        self.client = oauth.Client(self.consumer, self.token)
+        return self.token
+
     def _get_token(self, url, method="GET"):
         resp, content = self.client.request(url, method)
         if resp['status'] != '200':
             raise Exception("Invalid response %s." % resp['status'])
         d = dict(urlparse.parse_qsl(content))
         return oauth.Token(d['oauth_token'], d['oauth_token_secret'])
+
+    def __getattr__(self, name):
+        return getattr(self.client, name)
+
+
+class _YammerOAuth2Client(object):
+    def __init__(self, consumer_key, consumer_secret,
+                 access_token=None, redirect_url=None,
+                 access_token_url=None, authorize_url=None):
+        self.access_token = access_token
+        self.redirect_url = redirect_url
+        self.authorize_url = 'https://www.yammer.com/dialog/oauth' \
+            if authorize_url is None else authorize_url
+        self.access_token_url = \
+            'https://www.yammer.com/oauth2/access_token.json' \
+            if access_token_url is None else access_token_url
+
+    def get_authorize_url(self):
+        qs = urllib.urlencode(dict(client_id=self.consumer_key,
+                                   redirect_uri=self.redirect_url))
+        return "%s?%s" % (self.authorize_url, qs)
+
+    def authenticate(self, code):
+        qs = dict(client_id=self.consumer_key,
+                  client_secret=self.consumer_secret,
+                  code=code)
+        url = "%s?%s" % (self.access_token_url, qs)
+        resp, content = self.client.request(url, method)
+        if resp['status'] != '200':
+            raise Exception("Invalid response %s." % resp['status'])
+
+        d = dict()
+        try:
+            json_obj = json.loads(content)
+            if 'error' in json_obj:
+                raise YammerError(json_obj['error']['message'])
+            d = json_obj.get('user', dict()).get('access_token', dict())
+        except ValueError:
+            raise UnknownError('invalid response')
+
+        if 'token' not in d:
+            raise YammerError('invalid access token response')
+        return d['token']
+
+
+    def __getattr__(self, name):
+        return getattr(self.client, name)
+
 
 class _Endpoint(object):
     def __init__(self, yammer):
