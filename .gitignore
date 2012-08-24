@@ -1,2 +1,7 @@
 *.pyc
+virtualenv
+build
+dist
+*.egg
+*.egg-info
 creds.txt
