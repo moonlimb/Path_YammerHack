@@ -35,6 +35,9 @@ class Yammer(object):
                 url = '%s?%s' % (url, body)
                 body = ''
 
+        print url
+        print body
+
         resp, content = self.client.request(url, method=method, body=body)
         if resp.status == 401:
             raise UnauthorizedError()
