@@ -23,6 +23,7 @@ class Yammer(object):
         self.messages = _MessageEndpoint(self)
         self.groups = _GroupEndpoint(self)
         self.users = _UserEndpoint(self)
+        self.likes = _LikeEndpoint(self)
 
     def _apicall(self, endpoint, method, **params):
         url = '%s%s' % (self.base_url, endpoint)
@@ -197,6 +198,10 @@ class _MessageEndpoint(_Endpoint):
         """
         return self._get_msgs('messages.json', **kwargs)
 
+    def get(self, id, **kwargs):
+        """Returns the supplied message; see all() for keywords"""
+        return self._get_msgs('messages/%d.json' % id, **kwargs)
+
     def sent(self, **kwargs):
         """Returns sent messages; see all() for keywords"""
         return self._get_msgs('messages/sent.json', **kwargs)
@@ -350,6 +355,33 @@ class _UserEndpoint(_Endpoint):
     def by_email(self, email):
         """Get the user matching the supplied email address"""
         return self._get('users/by_email.json', email=email)
+
+
+class _LikeEndpoint(_Endpoint):
+    def create(self, message_id, user_id=None):
+        """Like the supplied message
+
+        Keyword arguments:
+        user_id -- The user id that likes the message, otherwise current user
+        """
+        if user_id is not None:
+            url = 'messages/liked_by/%d.json' % user_id
+        else:
+            url = 'messages/liked_by/current.json'
+        return self._post(url, message_id=message_id)
+
+    def delete(self, message_id, user_id=None):
+        """Remove like from the supplied message
+
+        Keyword arguments:
+        user_id -- The user id that likes the message, otherwise current user
+        """
+        if user_id is not None:
+            url = 'messages/liked_by/%d.json' % user_id
+        else:
+            url = 'messages/liked_by/current.json'
+        return self._delete(url, message_id=message_id)
+
 
 class UnauthorizedError(Exception):
     """Request to Yammer has not been authorized."""
