@@ -45,6 +45,9 @@ class Yammer(object):
         elif resp.status != 200 and resp.status != 201:
             raise UnknownError('invalid http response: %d' % resp.status)
 
+        print repr(resp)
+        print content
+
         try:
             json_obj = json.loads(content)
             if 'response' in json_obj \
