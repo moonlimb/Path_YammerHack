@@ -258,6 +258,9 @@ class _MessageEndpoint(_Endpoint):
         pending_attachments -- A list of pending attachment ids (max 20)
         og_<property> -- Open graph properties
         """
+        if not body:
+            raise ValueError('body is required')
+
         if not kwargs.get('group_id') and not kwargs.get('direct_to_id') \
                 and not kwargs.get('replied_to_id'):
             raise ValueError(
@@ -266,6 +269,7 @@ class _MessageEndpoint(_Endpoint):
         self._convert_list_to_keys(
             kwargs, 'pending_attachments', 'pending_attachment', size=20)
 
+        kwargs['body'] = body
         return self._post('messages.json', **kwargs)
 
     def delete(self, id):
@@ -292,7 +296,9 @@ class _MessageEndpoint(_Endpoint):
         if size is not None and len(args.get(list_key)) > size:
             raise ValueError('%s length must not exceed %d' % (list_key, size))
         for x in range(len(args.get(list_key))):
-            args['%s%d' % (item_key, x)] = args.get(list_key)[x]
+            args['%s%d' % (item_key, x + 1)] = args.get(list_key)[x]
+
+        del args[list_key]
 
 
 class _GroupEndpoint(_Endpoint):
