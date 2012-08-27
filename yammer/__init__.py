@@ -42,7 +42,7 @@ class Yammer(object):
         resp, content = self.client.request(url, method=method, body=body)
         if resp.status == 401:
             raise UnauthorizedError()
-        elif resp.status in [200, 201]:
+        elif resp.status in ['200', '201']:
             raise UnknownError('invalid http response: %d' % resp.status)
 
         print repr(resp)
