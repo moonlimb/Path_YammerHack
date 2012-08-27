@@ -55,8 +55,8 @@ class Yammer(object):
                 raise YammerError(json_obj['response']['message'])
             return json_obj
         except ValueError:
-            if resp.status == 201 and not bool(content.strip()):
-                # empty response acceptable
+            if method in ['POST', 'DELETE'] and not bool(content.strip()):
+                # empty response acceptable for posts and deletes
                 return dict()
             raise UnknownError('invalid response')
 
