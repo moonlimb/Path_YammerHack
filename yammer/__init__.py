@@ -162,6 +162,7 @@ class _YammerOAuth2Client(object):
                 dict({'Authorization': 'Bearer %s' % self.access_token})
         else:
             kwargs['headers']['Authorization'] = 'Bearer %s' % self.access_token
+        print repr(kwargs)
         return self.client.request(*args, **kwargs)
 
     def __getattr__(self, name):
