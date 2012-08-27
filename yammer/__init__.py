@@ -32,7 +32,7 @@ class Yammer(object):
 
         if cleaned_params:
             body = urllib.urlencode(cleaned_params)
-            if method == 'GET':
+            if method in ['GET', 'DELETE']:
                 url = '%s?%s' % (url, body)
                 body = ''
 
@@ -42,7 +42,7 @@ class Yammer(object):
         resp, content = self.client.request(url, method=method, body=body)
         if resp.status == 401:
             raise UnauthorizedError()
-        elif resp.status != 200 and resp.status != 201:
+        elif resp.status in [200, 201]:
             raise UnknownError('invalid http response: %d' % resp.status)
 
         print repr(resp)
