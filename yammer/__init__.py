@@ -42,7 +42,9 @@ class Yammer(object):
         resp, content = self.client.request(url, method=method, body=body)
         if resp.status == 401:
             raise UnauthorizedError()
-        elif resp.status in ['200', '201']:
+        elif resp.status == 404:
+            raise NotFoundError()
+        elif resp.status not in [200, 201]:
             raise UnknownError('invalid http response: %d' % resp.status)
 
         print repr(resp)
@@ -164,11 +166,13 @@ class _YammerOAuth2Client(object):
         return self.access_token
 
     def request(self, *args, **kwargs):
-        if 'headers' not in kwargs:
-            kwargs['headers'] = \
-                dict({'Authorization': 'Bearer %s' % self.access_token})
-        else:
-            kwargs['headers']['Authorization'] = 'Bearer %s' % self.access_token
+        if self.access_token is not None:
+            if 'headers' not in kwargs:
+                kwargs['headers'] = \
+                    dict({'Authorization': 'Bearer %s' % self.access_token})
+            else:
+                kwargs['headers']['Authorization'] = \
+                    'Bearer %s' % self.access_token
         print repr(kwargs)
         return self.client.request(*args, **kwargs)
 
@@ -391,6 +395,10 @@ class _LikeEndpoint(_Endpoint):
 
 class UnauthorizedError(Exception):
     """Request to Yammer has not been authorized."""
+    pass
+
+class NotFoundError(Exception):
+    """Yammer could not find the requested resource."""
     pass
 
 class YammerError(Exception):
