@@ -10,8 +10,6 @@ class TestYammerOAuth(unittest.TestCase):
     def setUp(self):
         self.key = 'key'
         self.secret = 'secret'
-        # self.key = 'ik52ElwSuf527gAfukukQ'
-        # self.secret = 'pGNJ2N9p0UB9qZRxq1H8mL9Ii2l1GSrlQD6lhM6JRUE'
 
     def teardown(self):
         pass

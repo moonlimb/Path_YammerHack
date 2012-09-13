@@ -36,9 +36,6 @@ class Yammer(object):
                 url = '%s?%s' % (url, body)
                 body = ''
 
-        print url
-        print body
-
         resp, content = self.client.request(url, method=method, body=body)
         if resp.status == 401:
             raise UnauthorizedError()
@@ -46,9 +43,6 @@ class Yammer(object):
             raise NotFoundError()
         elif resp.status not in [200, 201]:
             raise UnknownError('invalid http response: %d' % resp.status)
-
-        print repr(resp)
-        print content
 
         try:
             json_obj = json.loads(content)
@@ -173,7 +167,6 @@ class _YammerOAuth2Client(object):
             else:
                 kwargs['headers']['Authorization'] = \
                     'Bearer %s' % self.access_token
-        print repr(kwargs)
         return self.client.request(*args, **kwargs)
 
     def __getattr__(self, name):
