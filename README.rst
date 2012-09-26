@@ -10,8 +10,8 @@ extended at McCann-Erickson by Adam Gschwender <adam.gschwender@mccann.com>.
 
 All code is under a BSD-style license, see LICENSE for details.
 
-.. Homepage: http://github.com/McCannErickson/python-yammer/
-.. Source: http://github.com/McCannErickson/python-yammer/
+| Homepage: http://github.com/McCannErickson/python-yammer/
+| Source: http://github.com/McCannErickson/python-yammer/
 
 
 Requirements
