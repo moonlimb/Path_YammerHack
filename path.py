@@ -63,45 +63,41 @@ def map():
 	refs = json_dict["references"]
 
 	#event_html is unicode 
-	event_html=json_dict["meta"]["ymodules"][0]["inline_html"]
+	event_html2=json_dict["meta"]["ymodules"][0]["inline_html"]
 
-	#re_ stands for regular expression
+	f = open('json_raw.txt')
+	event_html = f.read()
+	f.close()
+
+	# re_ stands for regular expression
 	re_loc= r"\<div.*ymodule.*location.*\> (.*) \</div\>"
 	m = re.search(re_loc, event_html)
-	location = m.group(1)
+	event_location =  m.group(1)
 
 	re_title =r"\<h4.*\> (.*) \<\/a\>\s<\/h4\>"
-	n = re.search(re_title, text)
-	print n.group(1)
-
+	n = re.search(re_title, event_html)
+	event_title = n.group(1)
 
 	day_and_date =  "\<span.+2012.+\>([\w]+)\,\s([a-zA-Z]+\s[\d]+)\,\s"
 	year_and_hour = "(\d{4})\s(\d{1,2}\:\d{2}\s[P|A]M)\<\/span\>"
 	re_datetime = r"%s%s" %(day_and_date, year_and_hour)		
 
-	o = re.search(re_datetime, text)
+	o = re.search(re_datetime, event_html)
 	day_of_the_week = o.group(1)	#group 1 is day_of_the_week
 	date = o.group(2)	#group 2 is month day
 	year = o.group(3)	#group 3 is year
 	hour = o.group(4)	#group 4 is --:-- PM
 	event_time =  hour + " on " + day_of_the_week + ", " + date + ", " + year 
-	print event_time
 	
-	# re_event_title = 
-	#get list of people invited
-	guests_list = messages_dict["body"]["rich"]
-
-	# should return "(See attached Event)
-	# cc: @Moon Limb, eleonore@hacktoberfest2012.onmicrosoft.com, @Alex Kawas"
-
+	# # re_event_title = 
+	# #get list of people invited
+	# guests_list = messages_dict["body"]["rich"]
+	# guests_named = re.findall('(\w+\s\w+)', 'guests_list')
 	# guests_named = []
-	# guests_email_only = [] 
 
-
-# event_name = 
-# date=""
-
-	return render_template("map2.html", event_link=event_html,regex=m)
+	return render_template("map2.html", loc= event_location, title = event_title, time = event_time)
+		# title = event_title, time = event_time)
+		# event_time=event_time, event_location=event_location, event_title=event_title)
 
 	# return json_object
 	# client.request(url)
