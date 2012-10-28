@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<!-- layout template -->
+
+<html>
+    <head>
+        <title>Tipsy Task List</title>
+        <link rel="stylesheet" href="/static/css/bootstrap.css" type="text/css">
+    </head>
+
+    <body>
+
+<h1>To Do List</h1>
+<h2>How tipsy are you?</h2>
+
+<br>
+
+<form action="{{ url_for ("authenticate") }}" method="POST">
+
+    <input class = "login_input" type="text" name="email" placeholder="name@hackbright.com">
+    <br>
+    <input class = "login_input" type="password" name="password" placeholder="Password">
+    <br>
+    <input id="button_login" type="submit" value="Login with Yammer">
+
+</form>
+
+
+        </div>
+    </body>
+</html>

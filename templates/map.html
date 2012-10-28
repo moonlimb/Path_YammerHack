@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Yammer Hackathon</title>
+   <!--      <link rel="stylesheet" href="/static/css/bootstrap.css" type="text/css"> -->
+        <script  type="text/javascript"  src="http://maps.micello.com/webmap/v0/micellomap.js"></script>
+        <style type="text/css">
+            #mapElement { /* STYLE YOUR MAP */
+                width: 100%;
+                height: 100%;
+            }
+
+        </style>
+    </head>
+
+    <body>
+	    <div id="map">
+    <script type="text/javascript">
+
+            var key = "69589193-b0d2-414f-9f25-eab261c7b704";
+            var cid = "9629";
+
+            micello.maps.init(key,mapInit);
+
+            function  mapInit()  {
+                    var  mapControl  =  new  micello.maps.MapControl('mapElement');
+                    var  mapDataObject  =  mapControl.getMapData();
+                    mapDataObject.loadCommunity(cid);
+                    mapControl.onMapClick = onMapClick;
+                    mapDataObject.mapChanged = onMapChanged;
+            }
+
+            function onMapClick (mx, my, clicked) {
+    if (clicked) {
+        // do something with what was clicked
+        // then, do the default select action too
+        mapControl.defaultSelectAction(clicked);
+    }
+}
+}
+
+        </script>
+
+
+        <div id="mapElement"></div>
+
+	    </div>
+	    <!-- 	<div class="json_text">
+           	<embed src="{{ event_link }}">
+           	</embed>
+        </div> -->
+
+    </body>
+</html>
+
+
+
