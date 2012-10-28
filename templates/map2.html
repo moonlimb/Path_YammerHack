@@ -17,6 +17,14 @@
 
     <body>
 
+   <div style="float: center;" >
+                <h3>{{ title}}</h3>
+                {{ loc }}<br />
+                {{ time }}<br /> 
+
+    </div>
+
+<div id="mapElement">
         <script type="text/javascript">
 
             var key = "69589193-b0d2-414f-9f25-eab261c7b704";
@@ -35,21 +43,10 @@
         </script>
 
 
-        <div id="mapElement"></div>
-
-
-        <div class="span3 sb-fixed">
-          <div class="well sidebar-nav">
-
-            {{ title}}<br />
-            {{ loc }}<br />
-            {{ time }}<br />
-                    
-            
-           </div>
         </div>
 
-
+         
+</div>
     </body>
 
 </html>
