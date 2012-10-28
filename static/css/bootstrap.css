@@ -8,6 +8,8 @@
  * Designed and built with all the love in the world @twitter by @mdo and @fat.
  */
 
+
+
 article,
 aside,
 details,
@@ -5817,4 +5819,10 @@ a.badge:hover {
   background-color: white;
   color: black;
   font-size: 20px;
+}
+
+@media (min-width: 768px) { 
+  .sb-fixed{
+    position: fixed;
+  } 
 }
